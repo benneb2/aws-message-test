@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: message delivery API
+Resources:
+  messages:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: handler.messages
+      Runtime: nodejs8.10
+      CodeUri: .
+      Description: message delivery API
+      MemorySize: 512
+      Timeout: 10
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:GetItem'
+                - 'dynamodb:PutItem'
+                - 'dynamodb:Scan'
+              Resource:
+                'Fn::Join':
+                  - ''
+                  - - 'arn:aws:dynamodb:'
+                    - Ref: 'AWS::Region'
+                    - ':'
+                    - Ref: 'AWS::AccountId'
+                    - ':table/messagesTables'
+      Events:
+        ApiPost:
+          Type: Api
+          Properties:
+            Path: /messages
+            Method: POST
+        ApiGet:
+          Type: Api
+          Properties:
+            Path: /messages/{recipient}
+            Method: ANY
+
+  messagesTables:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: messagesTables
+      AttributeDefinitions:
+        - AttributeName: messageId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: messageId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
